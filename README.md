@@ -17,7 +17,9 @@ Week 10 Monday 6:00 pm [Sydney Local Time](https://www.timeanddate.com/worldcloc
 
 2. Although it is not a requirement that you deploy to Vercel in this lab, we recommend doing so as you will receive the most support from our staff this way.
 
-3. There are several steps, please patiently go through each of them. Please read the lab instructions regarding the [submission process](#testing-and-submitting-your-deployed_url) carefully when you've finished.
+3. There are several steps, please patiently go through each of them. **Please read the lab instructions regarding the [submission process](#testing-and-submitting-your-deployed_url) carefully** when you've finished.
+
+4. Click [here](https://youtu.be/YBMWfwXAfSo) for a demo of this lab!
 
 # Background
 
@@ -190,7 +192,7 @@ Getting a "`git@github.com: Permission denied (publickey)` or similar access rig
 
     </details>
 
-    If there's an error, you can [click on this video](https://youtu.be/fMovx1dWy2I) which can guide you through the process of how to fix it.
+    **If there's an error, you can [click on this video](https://youtu.be/fMovx1dWy2I)** which can guide you through the process of how to fix it.
     Otherwise, you can follow these instructions. First, click on `Inspect Deployment` at the bottom of the page.  You should end up on the `Deployment Details` page.
     If the build log mentions `npm ERR! code 1` go back to your project and click on the `Settings` tab. Then scroll down and change the Node version to 18. Afterwards, go back to the `Deployments` tab and click on the ellipsis button of your latest deployment. Then click `Redeploy`.
 
@@ -222,6 +224,11 @@ Getting a "`git@github.com: Permission denied (publickey)` or similar access rig
     Why is this the case? Well, Vercel is a [serverless](https://vercel.com/docs/functions/serverless-functions) deployment option that will only respond when a request is made. Any state variables, including local files e.g. `database.json`, will not be preserved. This means that if we'd implemented persistence - we'd lose it! What's a more robust solution? Instead of reading and writing to a file in our folder, let's read and write our data from an online database.
 
 ## 3. Setup Deployed Database
+For the project we've been persisting data by writing to a json file, e.g. `database.json`. This however will not work anymore as we can't write to files on Vercel! What we will do instead is **store everything as a key-value pair** in Vercel's online database. So in the case of lab09 it might look like:
+```typescript
+{ "names": ["Giuliana", "Yuchao"] }
+```
+To set this up, follow these steps:
 1. On your deployment page, navigate to the `Storage` tab.
     <details close>
     <summary>Top Bar > Storage </summary>
@@ -255,10 +262,10 @@ Getting a "`git@github.com: Permission denied (publickey)` or similar access rig
     ```typescript
     import { createClient } from '@vercel/kv';
 
-    // Replace this with your API_URL
+    // Replace this with your KV_REST_API_URL
     // E.g. https://large-poodle-44208.kv.vercel-storage.com
-    const KV_REST_API_URL="https://YOUR-URL.kv.vercel-storage.com";
-    // Replace this with your API_TOKEN
+    const KV_REST_API_URL="https://YOUR-URL";
+    // Replace this with your KV_REST_API_TOKEN
     // E.g. AaywASQgOWE4MTVkN2UtODZh...
     const KV_REST_API_TOKEN="YOUR-API_TOKEN";
 
@@ -298,6 +305,12 @@ Getting a "`git@github.com: Permission denied (publickey)` or similar access rig
     And likewise, if you send a GET request you should be able to retrieve the data you just set.
 
     From here, when you need to `setData()` or `getData()` you should send a request to the server route with the data information you want.
+
+    In order to understand what is happening, recall that everything is being stored as a key-value pair in our online database, for example: 
+    ```typescript
+    { "names": ["Giuliana", "Yuchao"] }
+    ```
+    `database.hgetall` will return the value of the key `names`. Similar to a getData operation. While `database.hset` sets the value for that key. Similar to a setData operation. 
 
 2. Modify the way we currently read and write data in [src/names.ts](src/names.ts) to use the routes we just created.
 
@@ -361,28 +374,45 @@ Getting a "`git@github.com: Permission denied (publickey)` or similar access rig
 
     **A reminder that the `DEPLOYED_URL` must contain your zID exactly once.** You may need to go to Settings > Domains > and edit your deployed url to include your zID.
 
-2. Add one last test to [src/names.test.ts](src/names.test.ts) as a sanity check.
-  ```typescript
-  describe('Deployed URL Sanity check', () => {
-    test('Looks for exactly one zID in the URL', () => {
-      const zIDs = (DEPLOYED_URL.match(/z[0-9]{7}/g) || []);
+2. Again, don't forget to `git add`, `git commit`, and then `git push deploy`, to re-deploy your application on Vercel. If you miss this step your changes made won't be applied.
 
-      // URL Sanity test
-      expect(zIDs.length).toEqual(1);
-      expect(DEPLOYED_URL.startsWith('http')).toBe(true);
-      expect(DEPLOYED_URL.endsWith('/')).toBe(false);
+4. Ensure all tests pass by running `npm t`, it should take around 20 seconds (NOTE: don't forget to remove the `test.todo` and uncomment the actual test suite!). If there are issues, head to the debugging section below.
 
-      if (process.env.GITLAB_USER_LOGIN) {
-        // Pipeline CI test
-        expect(zIDs[0]).toEqual(process.env.GITLAB_USER_LOGIN);
-      }
-    });
-  })
-  ```
+## Common Issues
 
-3. Again, don't forget to `git add`, `git commit`, and then `git push deploy`, to re-deploy your application on Vercel. If you miss this step your changes made won't be applied.
+  <details close>
+  <summary> 1. Vercel is not deploying the code you expect </summary>
 
-4. Ensure all tests pass by running `npm t`, it should take around 20 seconds. If there are issues, head to the debugging section below.
+  - Remember to `git add`, `git commit` and `git push deploy`. This will ensure that Github and hence Vercel receive your updated code. 
+  - After you've pushed your code to GitHub, ensure the commit hash on GitHub matches the one on Vercel. 
+  ![image](assets/5.6.push.code.home.png)
+  ![image](assets/5.7.push.code.github.png)
+  ![image](assets/5.8.push.code.deployment.tab.png)
+
+  - You can also check if Vercel has the correct files, by clicking on Your project > Source. Ensure that each file is as expected. Check for example if the `DEPLOYED_URL` was updated.
+  ![image](assets/5.4.debug-source.png)
+  </details>
+
+  <details close>
+  <summary> 2. Incorrect format for deployed URL </summary>
+
+  - Ensure the URL begins with `http` or `https`. Also check that it **doesn't** end with `/`. 
+  </details>
+
+  <details close>
+  <summary> 3. You've changed branches at some point </summary>
+
+  - Go to Settings > Git. Scroll down to Production Branch and change the name of the branch. 
+  - Additionally if you go to the Deployments tab, you may see that it says Preview, like in the image below. For the latest deployment, click on the ellipse icon (three horizontal dots) on the very right and click 'Promote to production'. 
+  ![image](assets/5.9.deploy.preview.png)
+  </details>
+
+  <details close>
+  <summary> 4. You're getting a 404 error </summary>
+
+  - You have very likely forgotten to push `vercel.json`! Follow the steps in section 1 of Common Issues. 
+  </details>
+
 
 
 ## Debugging tips
@@ -412,34 +442,20 @@ Getting a "`git@github.com: Permission denied (publickey)` or similar access rig
   </details>
 
   <details close>
-  <summary> 3. Setup issues & Additional resources </summary>
+  <summary> 3. General tips & Additional resources </summary>
 
-  - [Vercel Error Codes](https://vercel.com/docs/errors)
-
-  - [Vercel KV Error Codes](https://vercel.com/docs/storage/vercel-kv/vercel-kv-error-codes)
-
-  - If deployment is failing during setup, read the error message by going to Your project > Deployment > Click on the latest deployment > Read the deployment details.
-
-  </details>
-
-  <details close>
-  <summary> 4. Random tips </summary>
-
-  - Use `test.only` in your tests to focus on one test at a time.
-  - Make sure that the `DEPLOYED_URL` has `https://` in front of it in `submission.ts`.
-  - Forgetting to `git add`, `git commit` and `git push deploy` means that Github and hence Vercel never receive your updated code. This can result in errors.
+  - Use `test.only` in your tests to focus on one test at a time if you are failing them.
   - Debugging can require running `git push deploy` frequently. Whenever that occurs, it will redeploy your project. Keep in mind that Vercel only allows 100 deployments a day.
-  - Your project > Source. Check that Vercel has the correct files and that each file is as expected. Check for example if the DEPLOYMENT_URL was updated.
-  ![image](assets/5.4.debug-source.png)
-
+  - If deployment is failing during setup, read the error message by going to Your project > Deployment > Click on the latest deployment > Read the deployment details.
+  - [Vercel Error Codes](https://vercel.com/docs/errors)
+  - [Vercel KV Error Codes](https://vercel.com/docs/storage/vercel-kv/vercel-kv-error-codes)
+  - There is a demo for the lab [here](https://youtu.be/YBMWfwXAfSo) which can help guide you.  
   </details>
-
-
-
 
 # Submission
 - Use `git` to `add`, `commit`, and `push` your changes on your master branch. This time, you don't use `git push deploy` as that only updates Vercel and Github, not Gitlab. Your GitLab pipeline should also pass.
 - Check that your code has been uploaded to your Gitlab repository on this website (you may need to refresh the page).
+- Check that your zID inside `DEPLOYED_URL` is correct. Typos won't be accepted as grounds for a re-run. 
 
 **If you have pushed your latest changes to master on Gitlab no further action is required! At the due date and time, we automatically collect your work from what's on your master branch on Gitlab.**
 

@@ -1,14 +1,14 @@
 import request, { HttpVerb, Response } from 'sync-request-curl';
 import { DEPLOYED_URL } from './submission';
 
+test.todo('Remove this line and uncomment the tests below!');
+
 // ========================================================================= //
+
+/*
 
 // Helpers
 
-/**
- * Adds additional hints for students in the returned object
- */
-// const parseResponse = (res: Response, path: string) => {
 const parseResponse = (res: Response, path: string) => {
   let caughtError = 'Unknown error';
   let comp1531Hint = 'No hint available for this error';
@@ -61,10 +61,6 @@ const requestHelper = (method: HttpVerb, path: string, payload: object) => {
 
 // ========================================================================= //
 
-/**
- * Wrapper functions
- */
-
 function clear() {
   return requestHelper('DELETE', '/clear', {});
 }
@@ -89,6 +85,22 @@ function viewNames() {
 
 beforeEach(clear);
 afterAll(clear);
+
+describe('Deployed URL Sanity check', () => {
+  test('Looks for exactly one zID in the URL', () => {
+    const zIDs = (DEPLOYED_URL.match(/z[0-9]{7}/g) || []);
+
+    // URL Sanity test
+    expect(zIDs.length).toEqual(1);
+    expect(DEPLOYED_URL.startsWith('http')).toBe(true);
+    expect(DEPLOYED_URL.endsWith('/')).toBe(false);
+
+    if (process.env.GITLAB_USER_LOGIN) {
+      // Pipeline CI test
+      expect(zIDs[0]).toEqual(process.env.GITLAB_USER_LOGIN);
+    }
+  });
+})
 
 describe('/', () => {
   test('success', () => {
@@ -154,3 +166,6 @@ describe('/view/names', () => {
     expect(viewNames()).toEqual({ names: ['Tam', 'Rani', 'Emily', 'Brendan'] });
   });
 });
+
+*/
+
