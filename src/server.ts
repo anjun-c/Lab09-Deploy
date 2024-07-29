@@ -9,6 +9,17 @@ import errorHandler from 'middleware-http-errors';
 import { DATABASE_FILE, setData, addName, viewNames, clear } from './names';
 import { port, url } from './config.json';
 
+import { createClient } from '@vercel/kv';
+
+const KV_REST_API_URL = "https://knowing-silkworm-58106.upstash.io"
+const KV_REST_API_TOKEN = "********"
+
+const database = createClient({
+  url: KV_REST_API_URL,
+  token: KV_REST_API_TOKEN,
+});
+
+
 const PORT: number = parseInt(process.env.PORT || port);
 const SERVER_URL = `${url}:${PORT}`;
 
@@ -37,6 +48,17 @@ app.get('/view/names', (req: Request, res: Response) => {
 
 app.delete('/clear', (req: Request, res: Response) => {
   res.json(clear());
+});
+
+app.get('/data', async (req: Request, res: Response) => {
+  const data = await database.hgetall("data:names");
+  res.status(200).json(data);
+});
+
+app.put('/data', async (req: Request, res: Response) => {
+  const { data } = req.body;
+  await database.hset("data:names", { data });
+  return res.status(200).json({});
 });
 
 app.use(errorHandler());
